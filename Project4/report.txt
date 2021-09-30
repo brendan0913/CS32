@@ -1,0 +1,112 @@
+Brendan Rossmango 505 370 692
+
+	For my algorithms and data structures, I utilized one hash table that held Info nodes 
+to keep track of user contributions, total number of contributions in a chat, current chat,
+etc. By utilizing one hash table, the join, leave and contribute functions were made 
+really efficient, with only terminate being an inefficient function (since the hash table
+was hashed by user and not by chat, I had to go through each bucket in the hash table and
+each list to search for the given chat).
+	My hash table is a vector of lists of Info nodes. In the implementation constructor, 
+the vector is resized to hold the maxBuckets (20000). In join, new Info nodes are pushed
+to the front of the hashed list after the hash function is called. join also deals with
+joining an already existing chat with the same user. If the same info node exists (same 
+user and chat), then the new info node's count is set equal to the other count of the node
+that already exists, then the original node is erased, then the new info node is pushed to
+the front).
+	It takes a key user and uses Info nodes. The original Info struct was 
+mainitained; however, I added a bool isActive to track if the user leaves the chat. If the
+user is present in the chat and has not left, the bool is true (in join, the info Node is
+made with isActive initially true). When the user leaves, the info node is not erased; instead
+this bool is simply set false. Therefore, in order to check if the user-chat combination
+is present in the list in the bucket, I also check if isActive is true (becuase if this was false
+then the user technically has left this chat and should not be treated as if the user joined
+in and hasnt left).
+	To keep track of current chat, all I did was push the new Info nodes to the front 
+of each list. The current chat is the first instance of the chat where isActive is true and
+the user is the same. This way, contribute is very efficient; it hashes to the correct list
+and traverses the list to see where the user is the same and isActive is true,
+then simply returns the count of contributions.
+
+void ChatTrackerImpl::join(string user, string chat)
+{
+    apply hash function to find index for given user
+    go through the list at the index found by the hash function
+    if the user and chat combination are already present in the list and the user is active
+(previously joined and has not left)
+            make an info node with user and chat
+            set new info's count equal to the original count of the info node that was already present
+	    erase original info
+            push new info to front of the list 
+            return
+        go to next spot in list
+    // exits loop, the user and chat are completely new
+    makes info node, isActive is true
+    pushes info node to the front of the current list (so it is the user's current chat
+}
+
+int ChatTrackerImpl::terminate(string chat)
+{
+    int total
+    go through entire hashtable of buckets
+        go into each list of each bucket
+            go through each info item in each list
+        
+            if chat is present
+            
+                add to total the count of the current info item
+                erase the info item
+            
+            else
+                go to the next info item
+
+    return total
+
+
+int ChatTrackerImpl::contribute(string user)
+{
+    apply hash function with user
+    go through the current list at the index found by the hash function
+    
+        if the info node has the same user and is active (current chat)
+        
+           increment the count of contributions
+           return the count
+        
+        go to next item
+    
+    return 0 // if there is no active chat for the user, there is no current chat
+}
+
+int ChatTrackerImpl::leave(string user, string chat)
+{
+    apply hash function for given user
+    go through the current list at the index found by the hash function
+    
+        if node found (the user and chat info node are present) 
+	and the user is active in the chat (hasnt left)
+	    set isActive to false
+            return number of contributions
+        
+        go to next item in list
+    
+    return -1 // if there is no matching info item for the chat in which the user is active in
+}
+
+int ChatTrackerImpl::leave(string user)
+{
+    apply hash function for given user
+    go through the current list at the index found by the hash function
+    
+        if user found and the user is active // this is the current chat, the first instance
+				// of an info item with the same user and active true
+            set isActive to false
+            return number of contributions
+        go to next item in list
+    }
+    return -1 // if there is no instance of user being active, there is no current chat
+
+The only inefficiency is with terminate (since it uses nested loops to find the given chat
+in each bucket and list, because I don't use two hashtables where one keeps track of chats).
+However, this is not a serious inefficiency, as my time is below 70 ms for multiple tests.
+
+}

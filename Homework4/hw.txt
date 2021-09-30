@@ -1,0 +1,37 @@
+Brendan Rossmango 505370692
+
+2. The compilation error with inserting an item of class Coord is that there is no custom
+== operator for the class Coord for the insert method to use. There are only defined == 
+operators for built in types like int and string, but there is no way to compare two Coords,
+which the code tries to do in insert with p->m_value == value.
+
+3a. O(N^3)
+The first loop with int i runs a maximum of N times. Then the second loop also runs a 
+maximum of N times, then the most inner loop with int k runs a maximum of N times, so 
+N*N*N is N^3.
+
+3b. O(N^3)
+The first loop with int i runs a maximum of N times. Then the second loop also runs a 
+maximum of N times, since we can look at the maximum of i as N, then the most inner loop 
+with int k runs a maximum of N times, so N*N*N is N^3.
+
+4a. O(N^2)
+In unite, a loop is used, where the maximum times the item is inserted is N. get is called
+and get's maximum is O(N); the if statement (i < size/2) is just to speed up the process
+of running the same for loop from either the beginning or the end. Inserting an item is 
+linear with O(1) for each N, so the time complexity is O(N*N), O(N^2).
+
+4b. O(N log N)
+All the items are copied into v, N times for the first set and N times for the second set,
+so as of now, the time complexity is O(2N).
+Sort uses a O(N log N) algorithm, so it is now O(2N + N log N). Deleting each time takes
+O(N) steps to delete each node, and finally the items are inserted a maximum of N times
+because of the for loop.
+The resulting time complexity is O(4N + N log N), and then the less dominant term is 
+unnecessary, so it is O(N log N).
+ 
+4c. O(N)
+The while loop runs N times, and within the while loop, only insertBefore is called, and
+its time complexity is O(1), so the while loop's time complexity is O(N).
+Then, the for loop is executed completely after the while loop is done, and its
+time complexity is O(N). These are added, O(N+N) = O(2N) = O(N)

@@ -1,0 +1,1484 @@
+Brendan Rossmango 505 370 692
+
+Goblin recursive function - findPath(int gr, int gc, int pr, int pc, int distance, 
+	int& mindist, int& dir, int smellRange), file Actor.cpp
+	this function calls findBestDirection and openSpot
+
+the findPath function takes in a grid that matches the actual dungeon grid, except 
+walls and monsters are marked an int meaning unreachable, and empty, open spots are
+marked an int meaning reachable. If the goblin position and player position are the same
+then the function returns. If the goblin is more than 15 reachable steps away, it returns
+Then, the position on the grid is marked discovered and if a spot is open in that direction
+the recursive function is called. To find the best direction, the findBestDirection function
+is called that calls the findPath function. This function uses an array of the 4 directions
+If south is open, then findpath is called and the array's first position is marked a new int.
+If north is open, then the minimum distance is reset to its initial value and find path is called
+	and the north spot in the array is marked.
+If east is open and mindist is less than 15, then the east spot in the array is marked.
+if west is open and the minimum distance is less than 15, then the west spot is marked.
+
+Design:
+There is an Actor class which has the basic move function, then each Actor (the player,
+the monsters) all derive from Actor (there is no monster class). The actors are made with
+the Actor constructor that has hp, strength, dexterity, armor, and player and dragon also
+are constructed with max hp. The actors work closely with the dungeon to access objects and
+the dungeon monsters (if it is the player) or change the cell statuses of each spot to their
+type (PLAYER, GOBLIN, etc.) so the display can show their move.
+	The player has an inventory and also has a current monster pointer, with functions
+to access the stats of the monster that it is fighting. The player also has data members
+for the bonuses it gets from weapons, that are set to different numbers when the current 
+weapon is changed (wielded). The player also has wield and read functions that work
+in tandem with the GameObject class to get the game object's name, bonuses, and action strings
+to display; wield for weapons and read for scrolls. The player also has a pickUp function
+where the status of the cell that had the object is set to empty and the object is pushed
+to the player's inventory vector. The player destructor erases and deletes the inventory.
+	Each actor has a different attemptMove function that works in accordance to 
+the cellStatus of each position and their way of movement. Firstly, the same in all of them,
+if the player and monster are next to each other, they will attack. Else, the player or
+monster will move (beside the Dragon, who only attacks in attemptMove) to the open spot
+if the spot is open (not occupied by an actor), setting its original spot EMPTY and 
+marking the new spot its type. This works with Dungeon's display which displays the character
+of each monster and actor each time by swtiching on the cell's status. The player has a 
+isMonster function that tells the player if the desired spot holds a monster, and the monster
+likewise has an isPlayer function.
+
+	The dungeon has the room Creation function and has the Player pointer so it can
+take the player's turn. Likewise, it has a vector of Actor pointers for the monster so
+the monsters can take their turn. The dungeon also has a vector of GameObject pointers
+so it can work with the weapons and scrolls on the floor. For each level, the dungeon
+adds the player, monsters, objects, stairway, or golden idol using functions that make new
+Actors or objects and marking the status of the cells they are placed on the correct icon.
+Before adding anything though, the dungeon creates a random level with 4-6 rooms, sets 
+the interior of these rooms to EMPTY, and sets every other cell as WALL. Then it adds
+the actors and objects to empty valid spots (non-actor-occupied spots). The dungeon adds 
+the monsters equipped with the player pointer, so they know where the player is and 
+access its stats. The dungeon also has a clearLevel function that deletes and empties 
+each object and monster vector when the player descends the stairway (or when he quits 
+or dies or wins). Finally, the dungeon has a function that deletes the killed monsters,
+and accordingly spawns new weapons and scrolls upon their deaths,
+ working with the GameObject class.
+	This GameObject class is simpler; in each of the Weapon and Scroll constructors
+they set the object's weapon and dexterity bonuses, and the positive enahncements of the
+scrolls.
+	Finally, the Game class plays the game; it has the dungeon pointer and the player
+pointer that the have access to, since the Game constructor makes the player, gives the 
+player a weapon, and sets the dungeon's player to the player it creates, so when the dungeon
+constructs the monsters, it constructs them with the player pointer. The Game takes the 
+player's turn, where the player can move (or attack), quit, cheat, pick stuff up, wield
+or read, etc., and it uses the player pointer to access these functions in the Player class.
+To make the monsters moves, the game calls the dungeon pointer to access the takeMonsterTurn,
+where the dungeon can move the monsters or have them attack. After the turns are made, the
+Game displays the dungeon again, and then the turns are made again and so on until the player
+dies (hp <= 0), wins (presses g on golden idol) or quits (q). Additionally, when the player
+does an action that should be displayed, its respective boolean is turned to true, so the 
+display knows to display this message (created in the attack function, the pickUp function,
+wield or read) on the next turn. At the beginning of each turn, these bools are turned off
+so the display only displays these actions once after each turn. Finally, the game has
+gameOver function; if the game is over, the loop to take turns is broken, the player must
+press q.
+
+Psuedocode:
+Actor.cpp
+
+Actor move function
+{
+	r = row
+	c = column
+
+	case WEST:
+		sets the column to the left as the player's position
+		return
+
+	case EAST:
+		sets the column to the right as the player's position
+		return
+
+	case NORTH:
+		sets the row above as the player's position
+		return
+	case SOUTH:
+		sets the row below as the player's position
+		return
+}
+
+Player attemptMove function
+	int row player row
+	int col player column
+	if the player is not asleep
+	{
+		switch direction
+		{
+		case WEST:
+			if Monster to left
+			{
+				set this monster as current monster to attack
+				attacks the monster with the correct message
+			}
+			else if to the left is not wall
+			{												// is a wall, since player will attack monsters or walk over objects and the stairs
+				if previous cell status is player
+					set previous status to empty
+				if new cell status is player
+					set new status to empty
+				move west
+				message to display is set empty
+			}
+			break;
+
+		case EAST
+			if Monster to right
+			{
+				set this monster as current monster to attack
+				attacks the monster with the correct message
+			}
+			else if to the right is not wall
+			{												// is a wall, since player will attack monsters or walk over objects and the stairs
+				if previous cell status is player
+					set previous status to empty
+				if new cell status is player
+					set new status to empty
+				move east
+				message to display is set empty
+			}
+			break;
+
+		case NORTH
+			if Monster to north
+			{
+				set this monster as current monster to attack
+				attacks the monster with the correct message
+			}
+			else if to the north is not wall
+			{												// is a wall, since player will attack monsters or walk over objects and the stairs
+				if previous cell status is player
+					set previous status to empty
+				if new cell status is player
+					set new status to empty
+				move north
+				message to display is set empty
+			}
+			break;
+
+		case SOUTH: // same prcoess as WEST
+			if Monster to south
+			{
+				set this monster as current monster to attack
+				attacks the monster with the correct message
+			}
+			else if to the south is not wall
+			{												// is a wall, since player will attack monsters or walk over objects and the stairs
+				if previous cell status is player
+					set previous status to empty
+				if new cell status is player
+					set new status to empty
+				move south
+				message to display is set empty
+			}
+			break;
+		default:
+			break;
+
+		}
+	}
+}
+
+void Player::setWeapon(int i) // when player wields a weapon, it is set as the current weapon
+{
+	inventory's selected weapon GameObject pointer
+	turns the GameObject pointer to a weapon pointer
+	sets current weapon to the selected weapon
+}
+
+bool Actor::isMonster(int row, int col)
+{
+	if there are monsters (size not empty)
+	{
+		get Dungeon monster vector
+		iterator at start
+		while (itr not at end)
+		{
+			Actor* a = *itr;
+			if the parameters for the row and col match the current monster's position
+			{
+				return true;
+			}
+			itr++;
+		}
+		returns false if the position is not the current monster's position
+	}
+	return false if there are no monsters
+}
+
+void Player::setCurrentMonster(int row, int col)
+{
+	gets the monster vector from Dungeon
+	iterator at start
+	while (itr not at end)
+	{
+		Actor* a = *itr;
+		if the parameters for the row and col match the current monster's position
+		{
+			sets the current monster so the Player is fighting the correct monster
+		}
+		itr++;
+	}
+}
+
+std::string Player::attack(Actor* mptr)
+{
+	string message = "Player " + weapon action
+	attackerPoints = player dexterity + weapon dex bonus
+	defenderPoints = the current monster's dexterity and armor points
+	getName of monster, add to message
+	if the attack is a hit
+	{
+		damagePoints, using formula of calculating damage points
+		decerases monster hp
+		if the weapon is not Magic fangs
+		{
+			if monster dies
+			{
+				message = message + " dealing a final blow.";
+				dungeon deletes monster
+			}
+			else
+				message = message + " and hits.";
+		}
+		if it is a magic fang
+		{
+			if the hit kills
+			{
+				message = message + " dealing a final blow.";
+				deletes the current monster from the monster vector
+				return message;
+			}
+			sleepPoss 1 in 5 chance
+			if the hit puts the monster to sleep
+			{
+				int sleepTime = randInt(2, 6)
+				if already asleep
+				{
+					if the new sleeptime is greater, it is the sleep time
+					{
+						set sleeptime of monster
+					} if it is not greater, then the previous sleep time is the sleeptime
+				}
+				if not asleep
+				{
+					set sleeptime of monster
+				}
+				adds to the message, "puts to sleep"
+			}
+			if the hit does not put to sleep
+			{
+				if the monster dies
+				{
+					message = message + " dealing a final blow.";
+					deletes monster from dungeon
+					return message;
+				}
+				if the monster is hit but does not die
+				{
+					message = message + " and hits.";
+				}
+			}
+		}
+	}
+	if the hit misses
+	{
+		message = message + " and misses.";
+	}
+	return message;
+}
+
+void Bogeyman::attemptMove()
+{
+	player row
+	player col
+	rowdistance = playerrow - bogeymanrow absolutevalue
+	coldistance = playercol - bogeymancol absolute value
+
+	add the distance of how far away the mosnter and player is
+
+	if the monster and player are 1 apart, that means they are next to each other
+	{
+		if the player is next to the monster in the 4 directions, the monster attacks
+	}
+	else
+	{
+
+		if player 5 smellrange away from bogeydude or less
+		{
+			theoretical north row = row - 1;
+			theoretical new distance = player row - new north row abs value
+			newdistancetoplayer = new_rdistance + cdistance;
+			if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as BOGEYMAN
+				moves north
+				set message empty
+			}
+
+			else
+			{
+			theoretical southrow = row + 1;
+			theoretical new distance = player row - new south row abs value
+			newdistancetoplayer = new_rdistance + cdistance;
+			if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as BOGEYMAN
+				moves south
+				set message empty
+			}
+
+
+				else
+				theoretical west col
+				theoretical new distance = player col- new west col abs value
+				newdistancetoplayer = rdistance + new col distance
+				if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as BOGEYMAN
+				moves west
+				set message empty
+			}
+
+					else
+					{
+						
+				theoretical east col
+				theoretical new distance = player col- new east col abs value
+				newdistancetoplayer = rdistance + new col distance
+				if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as BOGEYMAN
+				moves east
+				set message empty
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+string Bogeyman::attack()
+{
+	string message = "the Bogeyman slashes short sword at Player "; 
+	attackerPoints = Bogeyman's dexterity (could be 2 or 3)
+	defenderPoints = player's armor and dexterity
+	if the hit lands
+	{
+		damagePoints = randInt(0, strength() + 1); // strength is 2 or 3
+		does damage to player hp
+
+		if the player dies
+			message = message + "dealing a final blow.";
+		else
+			message = message + "and hits.";
+	}
+	if the hit does not land
+		message = message + "and misses."; 
+
+	return message;
+}
+
+
+void Actor::checkHP()  if the player has HP less than or equal to 0, he is dead
+
+
+void Actor::gainHP() regain health 1/10 chance, only if the health is less than the max health
+
+bool Player::wield(GameObject* go)
+{
+	try to convert GameObject to weapon
+	if the pointer is a scroll, then you cannot wield a scroll
+	if result is not null, go really points to a weapon
+	{
+		if SHORTSWORD or MACE
+		{
+			damagebonus 2
+			dexterity bonus 0
+		}
+		if LONGSWORD
+		{
+			damagebonus 4
+			dexterity bonus 2
+		}
+		if MAGICAXE
+		{
+			damagebonus 5
+			dexterity bonus 5
+		}
+		if  MAGICFANG
+			damagebonus 2
+			dexterity bonus 3
+		}
+		return true;
+	}
+}
+
+string Player::accessWield()
+{
+	string of valid characters in the inventory a-z
+	getCharacter();
+	if the inputted character is not a-z
+	{
+		return "";
+	}
+	else
+	{
+		for (size_t i = 0; i < m_inventory.size(); i++)
+		{
+			take the input that is equal to the str's ith position
+			{
+				string s = "";
+				if wield returns false, then it is a scroll
+				{
+					o is getObject at ith position
+					s = "You can't wield a " + o->getName();
+
+				}
+				if wield returns true, then it is a weapon
+				{
+					o is object at ith position
+					set as current weapon
+					s = "You wield " + o->getName();
+				}
+				sets the player's wielding string to created message so it can be displayed
+				set to true when something is wielded so it can be displayed on the next turn
+			}
+		}
+		return "";
+	}
+}
+
+bool Player::read(GameObject* go)
+{
+	try to convert to scroll
+	if the pointer is a weapon, you cannot wield a weapon
+	{
+		return false;
+	}
+	if result is not null, go points to a scroll
+	{
+		if health scroll 
+		{
+			adds to the max hp, 3-8 points
+		}
+		if armor scroll
+		{
+			adds armor, 1-3 points
+		}
+		if dexterity scroll
+		{
+			dexterity adds 1 point
+		}
+		if strength scoll
+		{
+			 strength adds 1-3 points
+		}
+		if teleporation scroll
+		{
+			sets the previous position to empty only if there is no object on it
+			}
+			 tps to random position, set position checks if the new position is not occupied by an actor or wall
+		}
+		return true;
+	}
+}
+
+string Player::accessScroll()
+{
+	string of valid characters in the inventory a-z
+	getCharacter();
+	if the inputted character is not a-z
+	{
+		return "";
+	}
+	else
+	{
+		for (size_t i = 0; i < m_inventory.size(); i++)
+		{
+			take the input that is equal to the str's ith position
+			{
+				string s = "";
+				if read is false, cannot read weapon
+				{
+					s = "You can't read a " + o->getName();
+				}
+				else
+				{
+					GameObject* o = getObject(i);
+					s = "You read the scroll called " + o->getName();
+					try to convert to scroll
+					get scroll's action string, set the player's current action string as this
+					delete object at ith spot in inventory
+					erase the scroll at the inputted position
+				}
+				set the reading string and the bool to true so it can be displayed for one turn after it is read
+				return s;
+			}
+			else continue;
+		}
+		return "";
+	}
+}
+
+Player::~Player()
+{
+	std::vector<GameObject*>::iterator it = m_inventory.begin();
+	int i = 0;
+	 delete the entire inventory
+	
+}
+
+
+void Snakewoman::attemptMove()
+{
+	player row
+	player col
+	rowdistance = playerrow - snakewomanrow absolutevalue
+	coldistance = playercol - snakewomancol absolute value
+
+	add the distance of how far away the mosnter and player is
+
+	if the monster and player are 1 apart, that means they are next to each other
+	{
+		if the player is next to the monster in the 4 directions, the monster attacks
+	}
+	else
+	{
+
+		if player 3 smellrange away from snakegirl or less
+		{
+			// north
+			theoretical north row = row - 1;
+			theoretical new distance = player row - new north row abs value
+			newdistancetoplayer = new_rdistance + cdistance;
+			if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as SNAKEWOMAN
+				moves north
+				set message empty
+			}
+
+			else
+			{
+			theoretical southrow = row + 1;
+			theoretical new distance = player row - new south row abs value
+			newdistancetoplayer = new_rdistance + cdistance;
+			if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as SNAKEWOMAN
+				moves south
+				set message empty
+			}
+
+
+				else
+				theoretical west col
+				theoretical new distance = player col- new west col abs value
+				newdistancetoplayer = rdistance + new col distance
+				if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as SNAKEWOMAN
+				moves west
+				set message empty
+			}
+
+					else
+					{
+				theoretical east col
+				theoretical new distance = player col- new east col abs value
+				newdistancetoplayer = rdistance + new col distance
+				if the newdistance is closer and the spot is not occupied
+			{ 
+				set previous cell empty, set new cell as SNAKEWOMAN
+				moves east
+				set message empty
+						}
+					}
+				}
+			}
+		}
+	}
+}
+}
+
+
+string Snakewoman::attack()
+{
+	string message = "the Snakewoman strikes magic fangs at Player ";
+
+	attackerPoints Snakewoman dexterity and weapon dex bonus is 3 + 3
+	defenderPoints = player dexterity and armor
+	if hit lands
+	{
+
+		damagePoints = randInt(0, magicfang strength and snakewoman dexterity minus 1) (3)
+		sleepPoss 1 in 5 chance of hitting a sleep
+		damages the player
+
+		if (player dies)
+			message = message + "dealing a final blow.";
+		else
+		{
+			if the sleep hits player
+			{
+				sleepTime for randInt amount of turns, 2-6
+				if already asleep
+				{
+					if sleeptime more than current sleeptime
+					{
+						set sleeptime
+					}if the new sleep time is equal or less, then the sleepTime stays as the original time
+				}
+				if the player is not asleep
+				{
+					set sleeptime
+				}
+				message += "putting the Player to sleep.";
+			}
+			else
+			{
+				message += "and hits.";
+			}
+		}
+	}
+	if misses
+	{
+		message += "and misses.";
+	}
+	return message;
+}
+
+void Goblin::tryMove(int dir) // same process as the past monster moves
+{
+	int row = r();
+	int col = c();
+	if (sleepTime() == 0) // can only move if not asleep
+	{
+		switch (dir)
+		{
+		case WEST:
+			if (west is non occupied by actor
+			{
+				set previous cell to empty
+				set new cell to goblin
+				move west
+				set message empty
+			}
+			break;
+
+		case EAST:
+			if east is non occupied by actor
+			{
+				set previous cell to empty
+				set new cell to goblin
+				move east 
+				set message empty
+			}
+			break;
+
+		case NORTH:
+			if north is non occupied by actor
+			{
+				set previous cell to empty
+				set new cell to goblin
+				move north 
+				set message empty
+			}
+			break;
+
+		case SOUTH:
+			if south is non occupied by actor
+			{
+				set previous cell to empty
+				set new cell to goblin
+				move south 
+				set message empty
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+void Goblin::attemptMove()
+{
+	player row
+	player col
+	rowdistance = playerrow - goblinrow absolutevalue
+	coldistance = playercol - goblincol absolute value
+
+	add the distance of how far away the mosnter and player is
+
+	if the goblin and player are 1 apart, that means they are next to each other
+	{
+		if the player is next to the goblin in the 4 directions, the goblin attacks
+	}
+	else
+	{
+		//d()->makeGrid();
+		//int distance = 0;
+		//int min = INT_MAX;
+		//int dir = -1;
+		//findPath(row, col, prow, pcol, distance, min, dir, distancetoplayer);
+		//tryMove(dir);
+		//d()->clearGrid();
+		//return;
+		/*if (shortestPath.size() > 1)
+		{
+			Coord temp = shortestPath[1];
+			if (temp.r() + 1 == row && temp.c() == col)
+			{
+				tryMove(SOUTH);
+				shortestPath.clear();
+				anyPath.clear();
+				return;
+			}
+			if (temp.r() - 1 == row && temp.c() == col)
+			{
+				tryMove(NORTH);
+				shortestPath.clear();
+				anyPath.clear();
+				return;
+			}
+			if (temp.r() == row && temp.c() + 1 == col)
+			{
+				tryMove(EAST);
+				shortestPath.clear();
+				anyPath.clear();
+				return;
+			}
+			if (temp.r() == row && temp.c() - 1 == col)
+			{
+				tryMove(WEST);
+				shortestPath.clear();
+				anyPath.clear();
+				return;
+			}
+		}
+		else
+		{
+			d()->clearGrid();
+			shortestPath.clear();
+			anyPath.clear();
+			return;
+		}*/
+		/*makeGrid();
+		Coord player(prow, pcol);
+		Coord goblin(row, col);
+		moveCoords.push(player);
+		if (pathExists(player, goblin, 15) == "") return;
+		else if (pathExists(player, goblin, 15) == "SOUTH")
+		{
+			tryMove(SOUTH);
+			clearGrid();
+			return;
+		}
+		else if (pathExists(player, goblin, 15) == "EAST")
+		{
+			tryMove(EAST);
+			clearGrid();
+			return;
+		}
+		else if (pathExists(player, goblin, 15) == "WEST")
+		{
+			tryMove(WEST);  
+			clearGrid();
+			return;
+		}
+		else if (pathExists(player, goblin, 15) == "NORTH")
+		{
+			tryMove(NORTH);
+			clearGrid();
+			return;
+		}*/
+	}
+}
+
+void Goblin::findPath(int gr, int gc, int pr, int pc, int distance, int& mindist, int& dir, int smellRange)
+{
+	if (smellRange >= 10)
+	{
+		return;
+	}
+	if (gr == pr && gc == pc)
+	{
+		/*if (distance < mindist)
+		{
+			for (int i = 0; i < shortestPath.size(); i++)
+			{
+				shortestPath.clear();
+			}
+			for (int i = 0; i < anyPath.size(); i++)
+			{uhyhuy
+				shortestPath.push_back(anyPath[i]);
+			}
+		}*/
+		mindist = (mindist, distance);
+		return;
+	}
+	anyPath.push_back(Coord(gr, gc));
+	d()->setGoblinStatus(gr, gc, SEEN);
+	if (d()->openSpot(gr + 1, gc))
+	{
+		dir = SOUTH;
+		findPath(gr + 1, gc, pr, pc, distance + 1, mindist, dir, smellRange);
+	}
+	if (d()->openSpot(gr - 1, gc))
+	{
+		dir = NORTH;
+		findPath(gr - 1, gc, pr, pc, distance + 1, mindist, dir, smellRange);
+	}
+	if (d()->openSpot(gr, gc+1))
+	{
+		dir = EAST;
+		findPath(gr, gc + 1, pr, pc, distance + 1, mindist, dir, smellRange);
+	}
+	if (d()->openSpot(gr, gc - 1))
+	{
+		dir = WEST;
+		findPath(gr, gc - 1, pr, pc, distance + 1, mindist, dir, smellRange);
+	}
+	anyPath.pop_back();
+	d()->setGoblinStatus(gr, gc, EMPTY);
+	return;
+}
+
+/*void Goblin::findPath(int gr, int gc, int pr, int pc, int& distance, int& mindist, int& dir, int& initdistance) // recursive function for goblin movement
+{
+	if (distance > 15) return;
+	if (mindist < distance)
+	{
+		if ((gr + 1 == pr && gc == pc && dir == NORTH) || (gr - 1 == pr && gc == pc && dir == SOUTH)
+			|| (gr == pr && gc + 1 == pc && dir == WEST) || (gr == pr && gc - 1 == pc && dir == EAST)) {
+			return;
+		}
+	} 
+	if (openSpot(gr + 1, gc) && ((abs(pr - (gr + 1)) + abs(pc - gc)) < distance))
+	{
+		dir = SOUTH;
+		distance--;
+		mindist++;
+		findPath(gr + 1, gc, pr, pc, distance, mindist, dir, initdistance);
+	}
+	if (openSpot(gr, gc - 1) && ((abs(pr - gr) + abs(pc - (gc - 1))) < distance))
+	{
+		dir = WEST;
+		distance--;
+		mindist++;
+		findPath(gr, gc - 1, pr, pc, distance, mindist, dir, initdistance);
+	}
+	if (openSpot(gr, gc + 1) && ((abs(pr - gr) + abs(pc - (gc + 1))) < distance))
+	{
+		dir = EAST;
+		distance--;
+		mindist++;
+		findPath(gr, gc + 1, pr, pc, distance, mindist, dir, initdistance);
+	}
+	if (openSpot(gr - 1, gc) && ((abs(pr - (gr - 1)) + abs(pc - gc)) < distance))
+	{
+		dir = NORTH;
+		distance--;
+		mindist++;
+		findPath(gr - 1, gc, pr, pc, distance, mindist, dir, initdistance);
+	}
+	return;
+}*/
+
+//string Goblin::pathExists(Coord player, Coord goblin, int smellRange)
+//{
+//	int count = 0;
+//	int row = player.r();
+//	int col = player.c();
+//	moveCoords.pop();
+//	Coord newCoord(goblin.r(), goblin.c());
+//	if (smellRange < 0) 
+//		return "";
+//	goblinGrid[row][col] = WALL;
+//	if (openSpot(row - 1, col) || (r() == row - 1 && c() == col)) // PLAYER IS BELOW GOBLIN
+//	{
+//		if (getCellStatus(row - 1, col) == GOBLIN) return "SOUTH";
+//		goblinGrid[row - 1][col] = WALL;
+//		Coord afterMove(row - 1, col);
+//		moveCoords.push(afterMove);
+//		count++;
+//		if (player.r() == goblin.r() && player.c() == goblin.c() && count == 1)
+//		{
+//			newCoord.setr(afterMove.r());
+//			newCoord.setc(afterMove.c());
+//		}
+//	}
+//	if (openSpot(row, col+1) || (r() == row && c() == col+1)) // PLAYER IS LEFT OF GOBLIN
+//	{
+//		if (getCellStatus(row, col+1) == GOBLIN) return "WEST";
+//		goblinGrid[row][col+1] = WALL;
+//		Coord afterMove(row, col+1);
+//		moveCoords.push(afterMove);
+//		count++;
+//		if (player.r() == goblin.r() && player.c() == goblin.c() && count == 1)
+//		{
+//			newCoord.setr(afterMove.r());
+//			newCoord.setc(afterMove.c());
+//		}
+//	}
+//	if (openSpot(row + 1, col) || (r() == row + 1 && c() == col)) // PLAYER IS ABOVE GOBLIN
+//	{
+//		if (getCellStatus(row + 1, col) == GOBLIN) return "NORTH";
+//		goblinGrid[row + 1][col] = WALL;
+//		Coord afterMove(row + 1, col);
+//		moveCoords.push(afterMove);
+//		count++;
+//		if (player.r() == goblin.r() && player.c() == goblin.c() && count == 1)
+//		{
+//			newCoord.setr(afterMove.r());
+//			newCoord.setc(afterMove.c());
+//		}
+//	}
+//	if (openSpot(row, col - 1) || (r() == row && c() == col - 1)) // PLAYER IS RIGHT OF GOBLIN
+//	{
+//		if (getCellStatus(row, col - 1) == GOBLIN) return "EAST";
+//		goblinGrid[row][col - 1] = WALL;
+//		Coord afterMove(row, col - 1);
+//		moveCoords.push(afterMove);
+//		count++;
+//		if (player.r() == goblin.r() && player.c() == goblin.c() && count == 1)
+//		{
+//			newCoord.setr(afterMove.r());
+//			newCoord.setc(afterMove.c());
+//		}
+//	}
+//	if (moveCoords.empty()) return "";
+//	return pathExists(moveCoords.front(), newCoord, smellRange);
+//}
+
+string Goblin::attack()
+{
+	string message = "the Goblin slashes short sword at Player ";
+	attackerPoints = short sword has 0 dexterity bonus, goblin has 1 dex
+	defenderPoints = player dex and armor
+	if hit lands
+	{
+		int damagePoints = randInt(0, goblin has 3 strength, shortsword has 2 extra strength, minus 1
+		damages player
+
+		if (player dies)
+			message += "dealing a final blow.";
+		else
+			message += "and hits.";
+	}
+	else
+	{
+		message += "and misses.";
+	}
+	return message;
+}
+
+void Dragon::attemptMove() // Dragon doesnt actually move, his "move" is just his turn where he attacks if the player is next to him
+{
+player row
+	player col
+	rowdistance = playerrow - goblinrow absolutevalue
+	coldistance = playercol - goblincol absolute value
+
+	add the distance of how far away the mosnter and player is
+
+	if the goblin and player are 1 apart, that means they are next to each other
+	{
+		if the player is next to the goblin in the 4 directions, the goblin attacks
+	}
+}
+
+string Dragon::attack()
+{
+	string message = "the Dragon swings long sword at Player "; 
+	int attackerPoints = dragon dexterity is 4, long sword dex is 2
+	int defenderPoints = player dex and armor
+	if hit lands
+	{
+		int damagePoints = randInt(0, dragon strength 4, long sword damage 4, minus 1
+		damages player
+
+		if (player dies)
+			message += "dealing a final blow.";
+		else
+			message += "and hits.";
+	}
+	else
+	{
+		message += "and misses.";
+	}
+	return message;
+}
+
+Dungeon.cpp
+
+Dungeon::Dungeon(int level, Player* player)
+{
+    creates dungeon, level 0, sets player pointer
+}
+
+void Dungeon::createDungeon()
+{
+	sets every position to a wall at first
+	uses vector of Rooms
+
+	while (less than 60% empty spots and less than 4-6 rooms
+        do
+        {
+            makes room
+            sets bool overlap to false
+            if the room hasnt been created yet and pushed onto the vector, then it cant overlap
+            {
+		room itr at start
+                while (itr is not end and the room doesnt overlap)
+                {
+                    if rooms overlap, if they do, then the room shouldn't be made
+                    {
+                        overlaps  true;
+                    }
+                    it++;
+                }
+            }
+
+        } while (!inBounds(room) || overlaps) makes room if these are false (so the room is inBounds and does not overlap)
+
+        add room
+
+	for loops sets interior of room empty going from rooms left column to right column, top row to bottom row
+   	sort the rooms to connect them, using a custom comparison operator
+
+    while (iterator not at second to last room) cannot connect the last room to the void, so stops before the last room
+    {
+        connects the rooms that are next to each since they were sorted
+        it++;
+    }
+
+	fills the edges with walls
+
+    2-3 objects per level, this number is passed by reference
+    total number of monsters per level, passed by reference to the add functions
+    if (m_level == 0 || m_level == 1) 
+    {
+        clears the level (empties and deletes the monster and object vectors, if it is level 1, clears the level and sets the player to a new random empty position
+        adds weapons randomly and to valid spots, finds the number of weapons to add using randInt from 0 to numofObjects, then the rest will be scrolls
+        adds scrolls, an amount which is the remainder of numOfObjects still left to be added
+        adds stair to valid position
+        adds only goblins and snakewomen on 0th and 1st floor
+       set players monster inventory to monster inventory of the dungeon
+    }
+    if (m_level == 2)
+    {
+	same as with level but add Bogeymen
+
+    if (m_level == 3)
+    {
+       same as level 2 but add dragons
+    }
+
+    if (m_level == 4)
+    {	
+	same as level 3 but add golden idol instead of staircase
+    }
+}
+
+bool doesOverlap(Room a, Room b)
+{
+if the left of one room is to the right of the other room, and if the top of one room is below the 
+                    other room, then the rooms dont overlap
+    return true;
+}
+
+void Dungeon::roomConnect(Room a, Room b)
+{
+    takes distance between each room's center row and column, which is where the corridor starts
+    
+    if a is to the left of b
+    {
+        for (int i = 0; i < rdistance; i++)
+          sets each spot empty, going right, towards the row equal to the other room's center
+
+        for (int j = 0; j < cdistance; j++)
+        {
+            sets each spot empty, going towards the column equal to the other room's center
+        }
+
+    }
+    else same process, but now going the opposite way, left, since the center of a is greater than b
+    {
+        for (int i = 0; i < rdistance; i++)
+            m_grid[a.midrow - i][a.midcol] = EMPTY; sets each spot empty going towards left
+
+        for (int j = 0; j < cdistance; j++)
+        {
+            m_grid[a.midrow - rdistance][a.midcol + j] = EMPTY; sets each spot empty going up
+        }
+
+    }
+}
+
+void Dungeon::setPlayerPos()
+{
+    int rPlayer, cPlayer;
+    do
+    {
+        rPlayer = randInt(0, 17);
+        cPlayer = randInt(0, 69);
+    } find valid coordinate; if the coordinate has an actor or wall on
+                                  it, then it finds another coordinate until it doesnt
+
+	set player row and col
+
+	setstatus as PLAYER if the cell is not empty
+}
+
+void Dungeon::clearLevel()
+{
+    sets the player to a new position if its not the first level
+    deletes monsters only if there are some remaining that werent killed and deleted
+    {
+        while (m_monsters.size() != 0)
+        {
+            delete* it;
+            it = m_monsters.erase(it);
+        }
+    }
+    deletes objects only if there are some remaining that werent picked up 
+    {
+        while (m_objects.size() != 0)
+        {
+            delete* itr;
+            itr = m_objects.erase(itr);
+        }
+    }
+}
+
+void Dungeon::addGoblins(int& num)
+{
+        int nGoblins = randInt(0, numofmonsters)
+        if (nGoblins == 0) return
+        for (int i = 0; i < nGoblins; i++)
+        {
+           int rw, cw;
+            do
+            {
+                rw = randInt(1, 16);
+                cw = randInt(1, 68);
+            } while occupied by actor or wall);
+
+            add Goblin
+            if previous cell empty
+                set cell to Goblin
+            add to dungen vector
+            setdungeon
+        }
+ the num of Monsters to be added after Goblin are added is determined by the 
+     difference between the number of monsters left and the Goblin added
+
+void Dungeon::makeGrid() // goblin needs a temporary grid that matches the actual grid
+{
+    for (int r = 0; r <= 17; r++)
+    {
+        for (int c = 0; c <= 69; c++)
+        {
+            switch status of actual grid
+            {
+ 		if actor or wall
+                setstatus of goblinGrid as wall
+                break;
+		else
+               setstatus of goblinGrid as empty
+                break;
+            }
+        }
+    }
+
+}
+
+void Dungeon::addSnakewomen(int& num)
+{
+    if (m_level == 0 || m_level == 1) 
+ for (int i = 0; i < num; i++)
+        {
+            int rw, cw;
+            do
+            {
+                rw = randInt(1, 16);
+                cw = randInt(1, 68);
+            } while occupied by actor or wall);
+
+            add snakewoman
+            if previous cell empty
+                set cell to snakewoman;
+            add to dungen vector
+            setdungeon
+        }
+    }
+    if (m_level == 2 || m_level == 3 || m_level == 4)
+    {
+        int nSnakewomen = randInt(0, num)
+        if (nSnakewomen == 0) return
+        for (int i = 0; i < nSnakewomen; i++)
+        {
+           int rw, cw;
+            do
+            {
+                rw = randInt(1, 16);
+                cw = randInt(1, 68);
+            } while occupied by actor or wall);
+
+            add snakewoman
+            if previous cell empty
+                set cell to snakewoman;
+            add to dungen vector
+            setdungeon
+        }
+ the num of Monsters to be added after Snakewomen are added is determined by the 
+     difference between the number of monsters left to add and the snakewomen added
+    }
+}
+
+void Dungeon::addBogeymen(int& num)
+{
+    if (m_level == 2)
+    {
+        for (int i = 0; i < num; i++) // the number of them added is the remaining number of monsters to be added
+        {           // after the goblin and Bogeymenare added
+            int rw, cw;
+            do
+            {
+                rw = randInt(1, 16);
+                cw = randInt(1, 68);
+            } while occupied by actor or wall);
+
+            add Bogeymen
+            if previous cell empty
+                set cell to Bogeymen
+            add to dungen vector
+            setdungeon
+        }
+    }
+    if (m_level == 3 || m_level == 4)
+    {
+        int nBogeymen = randInt(0, num); // on level 3 and 4, there are still dragons to be added
+        if (nBogeymen == 0) { return; }
+        for (int i = 0; i < nBogeymen; i++)
+        {
+           int rw, cw;
+            do
+            {
+                rw = randInt(1, 16);
+                cw = randInt(1, 68);
+            } while occupied by actor or wall);
+
+            add Bogeymen
+            if previous cell empty
+                set cell to Bogeymen
+            add to dungen vector
+            setdungeon
+        }
+ the num of Monsters to be added after Bogeymen;are added is determined by the 
+     difference between the number of monsters left to add and the Bogeymen added}
+}
+
+void Dungeon::addDragons(int& num) // the number of dragons added is always the remainder of monsters left to be added
+{                           // since there are never any monsters to add after the dragons
+    for (int i = 0; i < num; i++)
+    {
+            int rw, cw;
+            do
+            {
+                rw = randInt(1, 16);
+                cw = randInt(1, 68);
+            } while occupied by actor or wall);
+
+            add Dragon
+            if previous cell empty
+                set cell to Dragon
+            add to dungen vector
+            
+    }
+}
+
+void Dungeon::addWeapon(int& num)
+{
+    int nWeapons = randInt(0, numOfObjects); 
+   if (nWeapons == 0) { return; }
+    int rWeapon, cWeapon;
+    for (int i = 0; i < nWeapons; i++)
+    {
+        do
+        {
+            rWeapon = randInt(1, 16);
+            cWeapon = randInt(1, 68);
+        } while (cellstatus not empty); // objects can be added anywhere, as long as it isnt stairway or idol
+
+        type = mace, short sword, longsword
+       make weapon
+        m_grid[rWeapon][cWeapon] = type
+       add weapon to dungeon vector
+    }
+     the number of scrolls to be added is the numberOfObjects initially minus the number of Weapons added
+}
+
+void Dungeon::addScroll(int& num)
+{
+    int rScroll, cScroll;
+    for (int i = 0; i < numberofobjects - number of weapon added;i++) //  {
+        do
+        {
+            rScroll = randInt(1, 16);
+            cScroll = randInt(1, 68);
+        } while (cellstatus not empty)
+
+        int sc = health,armor,dex,strength    
+	makes scroll
+        m_grid[rScroll][cScroll] = type
+        add to dungeon vector
+    }
+}
+
+
+void Dungeon::vibeCheck(Actor* a)
+{
+    vector<Actor*>::iterator it = m_monsters.begin();
+    while (*it != a) { it++; } goes through the monster to find the monster that was killed
+    if the monster in the vector is the desired position
+    {
+	if a is bogeyman
+        {
+		setstatus to bogeyman if it was empty
+            possofweapondrop = randInt(1, 10)
+            if spot is empty and the possibility is 1 (10%)
+            {
+		make magic axe, set the position to magic axe
+		add to object vector
+            }
+	delete, erase bogeyman
+        }
+        else
+        {
+            if a is snakewoman
+            {
+	setstatus to snakewomanif it was empty
+                int poss = randInt(1, 3);
+                if possibility is 1 and spot is empty
+                {
+		make magic fang, set position to magicfang
+		add to object vector
+    	           }
+		delete, erase snakewoman
+            }
+            else
+            {
+                if a is goblin
+                {
+                     setstatus to goblin if it was empty
+                    int poss = randInt(1, 3); 
+		    if (poss == 1 and spot is empty
+                    {
+                        make magic fang or magic axe, set the cellstatus type
+			add to object vector
+                    }
+                    delete erase monster
+                }
+                else
+                {
+		if a is dragon
+                    {
+			 setstatus to dragon if it was empty
+                       type = any scroll
+                        make scroll, set the cellstatus type
+			add to object vector
+			delete, erase dragon
+                    }
+                }
+            }
+        }
+    }
+}
+
+void Dungeon::takeMonsterTurns()
+{
+    //call attempt move on each monster if there are some alive
+    if there are monsters in the dungeon vector
+    {
+        while (itr not at end)
+        {
+            Actor* aptr = *itr;
+            sets the attack message to empty before each turn
+            if not asleep
+            {
+                current monster attempt moves
+            }
+            else
+            {
+               decreases sleeptime for monster
+            }
+            itr++;
+        }
+    }
+}
+
+int Dungeon::findObject(int i)
+{
+    vector<GameObject*>::iterator itr;
+
+    itr = m_objects.begin();
+    int j = 0;
+
+    while (itr not at end)
+    {
+        finds the desired object from the dungeon object inventory at vector[i]
+        itr++;
+        j++;
+    }
+
+    return 0
+}
+
+GameObject* Dungeon::getObject(int i)
+{
+    GameObject* o = m_objects[i];
+    removes the desired object from the dungeon object inventory at vector[i]
+    return o;
+}
+
+Dungeon::~Dungeon()
+{ 
+ deletes the objects and monsters that were not killed or picked up
+}
+
+The room creation works as follows:
+First, the entire dungeon is filled with walls
+It uses a while loop to check that the percent of empty cells in the dungeon is less than 
+40 and that there are randInt(4,6) rooms to be made. Then it makes the rooms with random
+corners and a center, makes sure the corners are in bounds of the dungeon, and that the 
+rooms do not overlap (so if the left column of one room is to the left of another room's
+right column). Then, the rooms are filled empty
+and are sorted by a custom comparison comparing the left columns.
+Then, the centers of consecutive rooms are found, and the program moves directly towards 
+the other room's center, making these spots empty, and thus the corridors are made.
+
+Besides the rooms, the only nontrivial thing about the dungeon methods is the order of how the dungeon, player,
+and monsters are created. On level 0, the player is added first to any empty spot and then
+sets its cell to ACTOR, then all the monsters are added on empty, non actor spots. Then,
+after the actors are added, a function is called to clear all ACTOR cells and turn them
+empty. Then, the objects and stairs are added.
+	On levels 1-4, the monsters are added first on any empty spot, then the player
+is added to any empty, non actor cell, then the objects and stairs (or idol) is added.
+
+The Game methods, while not trivially short, are pretty self-explanatory and easy to 
+understand. The game just displays the board each turn after players and monsters take their
+turns and move, and the game displays if the player picks up something or accesses stuff
+from the inventory after these bool flags are set on the previous turn, meaning that
+something was picked up or wielded or read. Therefore, psuedocode is unnecessary
+
+Bugs: 
+ - none that I know of after a looooot of testing. I guess one would be that changing
+the argument of the Game constructor has no effect as the Goblin always has a smell range
+of 15 as stated by the spec, but I believe youre only supposed to change the goblin smell
+range if your recursive algorithm is flawed.
